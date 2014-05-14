@@ -334,3 +334,4 @@ void __init ville_allocate_fb_regions(void)
 	pr_info("allocating %lu bytes at %p (%lx physical) for fb\n",
 		size, addr, __pa(addr));
 }
+

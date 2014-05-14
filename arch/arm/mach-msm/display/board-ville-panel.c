@@ -203,7 +203,6 @@ static struct dsi_cmd_desc auo_display_off_cmds[] = {
 		sizeof(slpin_cmd), slpin_cmd}
 };
 
-#ifdef PANEL_READ_MANU_ID
 static char manufacture_id[2] = {0x04, 0x00}; 		
 
 static struct dsi_cmd_desc samsung_manufacture_id_cmd = {
@@ -222,20 +221,14 @@ static uint32 mipi_samsung_manufacture_id(struct msm_fb_data_type *mfd)
 	cmd = &samsung_manufacture_id_cmd;
 	return 0;
 }
-#else
-static uint32 mipi_samsung_manufacture_id(struct msm_fb_data_type *mfd)
-{
-	return 0;
-}
-#endif
 
 
 #define PWM_MIN                   30
-#define PWM_DEFAULT               78
+#define PWM_DEFAULT               126
 #define PWM_MAX                   255
 
 #define BRI_SETTING_MIN                 30
-#define BRI_SETTING_DEF                 143
+#define BRI_SETTING_DEF                 142
 #define BRI_SETTING_MAX                 255
 
 #define AMOLED_NUM_LEVELS 	ARRAY_SIZE(samsung_amoled_gamma_table)
@@ -504,10 +497,12 @@ static inline void ville_mipi_dsi_set_backlight(struct msm_fb_data_type *mfd)
 	else if (panel_type == PANEL_ID_VILLE_SAMSUNG_SG)
 		ville_shrink_pwm(mfd->bl_level);
 
+
+
 	if (panel_type == PANEL_ID_VILLE_SAMSUNG_SG || panel_type == PANEL_ID_VILLE_SAMSUNG_SG_C2) {
 		cmdreq.cmds = samsung_cmd_backlight_cmds;
 		cmdreq.cmds_cnt = ARRAY_SIZE(samsung_cmd_backlight_cmds);
-		cmdreq.flags = CMD_REQ_COMMIT;
+		cmdreq.flags = CMD_REQ_COMMIT| CMD_CLK_CTRL;
 		if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
 			cmdreq.flags |= CMD_CLK_CTRL;
 		cmdreq.rlen = 0;
@@ -557,8 +552,8 @@ static int ville_lcd_on(struct platform_device *pdev)
 				cmdreq.cmds_cnt = ARRAY_SIZE(samsung_cmd_on_cmds);
 			}
 			cmdreq.flags = CMD_REQ_COMMIT;
-			if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
-				cmdreq.flags |= CMD_CLK_CTRL;
+				if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
+			cmdreq.flags |= CMD_CLK_CTRL;
 			cmdreq.rlen = 0;
 			cmdreq.cb = NULL;
 			mipi_dsi_cmdlist_put(&cmdreq);
@@ -584,7 +579,7 @@ static void ville_display_on(struct msm_fb_data_type *mfd)
 	}
 	cmdreq.flags = CMD_REQ_COMMIT;
 	if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
-		cmdreq.flags |= CMD_CLK_CTRL;
+			cmdreq.flags |= CMD_CLK_CTRL;
 	cmdreq.rlen = 0;
 	cmdreq.cb = NULL;
 	mipi_dsi_cmdlist_put(&cmdreq);
@@ -622,8 +617,8 @@ static int ville_lcd_off(struct platform_device *pdev)
 		cmdreq.cmds_cnt = ARRAY_SIZE(auo_display_off_cmds);
 	}
 	cmdreq.flags = CMD_REQ_COMMIT;
-	if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
-		cmdreq.flags |= CMD_CLK_CTRL;
+		if (mfd && mfd->panel_info.type == MIPI_CMD_PANEL)
+			cmdreq.flags |= CMD_CLK_CTRL;
 	cmdreq.rlen = 0;
 	cmdreq.cb = NULL;
 
@@ -806,6 +801,7 @@ static int mipi_cmd_samsung_blue_qhd_pt_init(void)
 	pinfo.bpp = 24;
 	pinfo.width = 49;
 	pinfo.height = 87;
+	pinfo.camera_backlight = 135;
 
 	pinfo.lcdc.h_back_porch = 64;
 	pinfo.lcdc.h_front_porch = 96;
@@ -822,7 +818,6 @@ static int mipi_cmd_samsung_blue_qhd_pt_init(void)
 	pinfo.bl_max = 255;
 	pinfo.bl_min = 1;
 	pinfo.fb_num = 2;
-	pinfo.camera_backlight = 185;
 	pinfo.clk_rate = 482000000;
 	pinfo.lcd.vsync_enable = TRUE;
 	pinfo.lcd.hw_vsync_mode = TRUE;
@@ -844,7 +839,10 @@ static int mipi_cmd_samsung_blue_qhd_pt_init(void)
 	pinfo.mipi.insert_dcs_cmd = TRUE;
 	pinfo.mipi.wr_mem_continue = 0x3c;
 	pinfo.mipi.wr_mem_start = 0x2c;
+	pinfo.mipi.frame_rate = 60;
 	pinfo.mipi.dsi_phy_db = &dsi_cmd_mode_phy_db;
+	pinfo.mipi.esc_byte_ratio = 4;
+	
 
 	ret = mipi_samsung_device_register(&pinfo, MIPI_DSI_PRIM,
 						MIPI_DSI_PANEL_WVGA_PT);
